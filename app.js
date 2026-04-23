@@ -4,7 +4,7 @@ const app = express();
 app.use(express.json());
 
 //Rotas
-const userRoutes = require('./routes/user')
+const userRoutes = require('./routes/routes/user')
 app.use ('/user', userRoutes);
 
 
