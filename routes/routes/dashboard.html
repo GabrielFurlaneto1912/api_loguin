@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Dashboard Corrida</title>
+
+  <style>
+    body {
+      font-family: Arial;
+      background: #0f172a;
+      color: white;
+      margin: 0;
+      padding: 20px;
+    }
+
+    h1 {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+
+    .container {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+    }
+
+    .card {
+      background: #1e293b;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.3);
+    }
+
+    .card h2 {
+      margin-bottom: 15px;
+      font-size: 18px;
+      color: #38bdf8;
+    }
+
+    .ranking-item {
+      display: flex;
+      justify-content: space-between;
+      padding: 5px 0;
+      border-bottom: 1px solid #334155;
+    }
+
+    button {
+      margin-top: 20px;
+      padding: 10px;
+      width: 100%;
+      border: none;
+      background: #38bdf8;
+      color: black;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+
+<body>
+
+  <h1>🏎️ Dashboard de Corrida</h1>
+
+  <div class="container">
+
+    <!-- Melhor Volta -->
+    <div class="card">
+      <h2>🥇 Melhor Volta</h2>
+      <p id="melhorVolta">Carregando...</p>
+    </div>
+
+    <!-- Tempo Total -->
+    <div class="card">
+      <h2>⏳ Tempo Total</h2>
+      <div id="tempoTotal"></div>
+    </div>
+
+    <!-- Ranking -->
+    <div class="card">
+      <h2>🏆 Ranking</h2>
+      <div id="ranking"></div>
+    </div>
+
+  </div>
+
+  <button onclick="carregarDados()">🔄 Atualizar</button>
+
+  <script>
+    const API = 'http://localhost:3000/users/dashboard';
+
+    async function carregarDados() {
+      carregarMelhorVolta();
+      carregarTempoTotal();
+      carregarRanking();
+    }
+
+    // 🥇 Melhor volta
+    async function carregarMelhorVolta() {
+      const res = await fetch(`${API}/melhor-volta`);
+      const data = await res.json();
+
+      document.getElementById('melhorVolta').innerHTML =
+        `${data.nome} - ${data.melhor_volta}s`;
+    }
+
+    // ⏳ Tempo total
+    async function carregarTempoTotal() {
+      const res = await fetch(`${API}/tempo-total`);
+      const data = await res.json();
+
+      const div = document.getElementById('tempoTotal');
+      div.innerHTML = '';
+
+      data.forEach(c => {
+        div.innerHTML += `
+          <div class="ranking-item">
+            <span>${c.nome}</span>
+            <span>${c.tempo_total}s</span>
+          </div>
+        `;
+      });
+    }
+
+    // 🏆 Ranking
+    async function carregarRanking() {
+      const res = await fetch(`${API}/ranking`);
+      const data = await res.json();
+
+      const div = document.getElementById('ranking');
+      div.innerHTML = '';
+
+      data.forEach((c, index) => {
+        div.innerHTML += `
+          <div class="ranking-item">
+            <span>#${index + 1} ${c.nome}</span>
+            <span>${c.total}s</span>
+          </div>
+        `;
+      });
+    }
+
+    // carregar ao abrir
+    carregarDados();
+  </script>
+
+</body>
+</html>

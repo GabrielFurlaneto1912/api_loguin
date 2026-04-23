@@ -2,9 +2,14 @@ const express = require('express');
 const router = express.Router();
 const db = require('../../db');
 
+
+// =========================
+// 👤 USUÁRIOS
+// =========================
+
 // GET usuários (sem senha)
 router.get('/', (req, res) => {
-    db.query('SELECT id, nome, email FROM users', (err, results) => {
+    db.query('SELECT id, nome, email FROM usuarios', (err, results) => {
         if (err) {
             return res.status(500).json({ error: 'Erro ao buscar usuários' });
         }
@@ -20,7 +25,7 @@ router.post('/create', (req, res) => {
         return res.status(400).json({ error: 'Nome, email e senha são obrigatórios' });
     }
 
-    const sql = 'INSERT INTO users (nome, email, senha) VALUES (?, ?, ?)';
+    const sql = 'INSERT INTO usuarios (nome, email, senha) VALUES (?, ?, ?)';
 
     db.query(sql, [nome, email, senha], (err, result) => {
         if (err) {
@@ -37,10 +42,9 @@ router.post('/create', (req, res) => {
 // ATUALIZAR usuário
 router.put('/update/:id', (req, res) => {
     const { id } = req.params;
-
     const { nome, email, senha } = req.body;
 
-    const sql = 'UPDATE users SET nome = ?, email = ?, senha = ? WHERE id = ?';
+    const sql = 'UPDATE usuarios SET nome = ?, email = ?, senha = ? WHERE id = ?';
 
     db.query(sql, [nome, email, senha, id], (err, result) => {
         if (err) {
@@ -58,9 +62,8 @@ router.put('/update/:id', (req, res) => {
 // DELETAR usuário
 router.delete('/delete/:id', (req, res) => {
     const { id } = req.params;
-    const sql = 'DELETE FROM users WHERE id = ?';
 
-    db.query(sql, [id], (err, result) => {
+    db.query('DELETE FROM usuarios WHERE id = ?', [id], (err, result) => {
         if (err) {
             return res.status(500).json({ error: 'Erro ao deletar usuário' });
         }
@@ -73,48 +76,73 @@ router.delete('/delete/:id', (req, res) => {
     });
 });
 
-// BUSCAR usuário por id
+// BUSCAR usuário por ID
 router.get('/:id', (req, res) => {
     const { id } = req.params;
-    const sql = 'SELECT id, nome, email FROM users WHERE id = ?';
 
-    db.query(sql, [id], (err, results) => {
-        if (err) {
-            return res.status(500).json({ error: 'Erro ao buscar usuário' });
+    db.query(
+        'SELECT id, nome, email FROM usuarios WHERE id = ?',
+        [id],
+        (err, results) => {
+            if (err) {
+                return res.status(500).json({ error: 'Erro ao buscar usuário' });
+            }
+
+            if (results.length === 0) {
+                return res.status(404).json({ error: 'Usuário não encontrado' });
+            }
+
+            return res.json(results[0]);
         }
-
-        if (results.length === 0) {
-            return res.status(404).json({ error: 'Usuário não encontrado' });
-        }
-
-        return res.json(results[0]);
-    });
+    );
 });
 
-app.get('/melhor-volta', (req, res) => {
-    db.query(
-      `SELECT c.nome, MIN(v.tempo) AS melhor_volta
-       FROM voltas v
-       JOIN corredores c ON v.corredor_id = c.id`,
-      (err, result) => {
-        if (err) return res.status(500).json(err);
-        res.json(result[0]);
-      }
-    );
-  });
 
+// =========================
+// 📊 DASHBOARD
+// =========================
 
-  router.get('/tempo-total', (req, res) => {
+// 🥇 Melhor volta
+router.get('/dashboard/melhor-volta', (req, res) => {
     db.query(
-      `SELECT c.nome, SUM(v.tempo) AS tempo_total
-       FROM voltas v
-       JOIN corredores c ON v.corredor_id = c.id
-       GROUP BY c.id`,
-      (err, result) => {
-        if (err) return res.status(500).json(err);
-        res.json(result);
-      }
+        `SELECT c.nome, MIN(v.tempo) AS melhor_volta
+         FROM voltas v
+         JOIN corredores c ON v.corredor_id = c.id`,
+        (err, result) => {
+            if (err) return res.status(500).json(err);
+            res.json(result[0]);
+        }
     );
-  });
+});
+
+// ⏳ Tempo total
+router.get('/dashboard/tempo-total', (req, res) => {
+    db.query(
+        `SELECT c.nome, SUM(v.tempo) AS tempo_total
+         FROM voltas v
+         JOIN corredores c ON v.corredor_id = c.id
+         GROUP BY c.id`,
+        (err, result) => {
+            if (err) return res.status(500).json(err);
+            res.json(result);
+        }
+    );
+});
+
+// 🏆 Ranking
+router.get('/dashboard/ranking', (req, res) => {
+    db.query(
+        `SELECT c.nome, SUM(v.tempo) AS total
+         FROM voltas v
+         JOIN corredores c ON v.corredor_id = c.id
+         GROUP BY c.id
+         ORDER BY total ASC`,
+        (err, result) => {
+            if (err) return res.status(500).json(err);
+            res.json(result);
+        }
+    );
+});
+
 
 module.exports = router;

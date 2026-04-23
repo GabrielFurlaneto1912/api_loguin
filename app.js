@@ -3,9 +3,12 @@ const app = express();
 
 app.use(express.json());
 
-//Rotas
-const userRoutes = require('./routes/routes/user')
-app.use ('/user', userRoutes);
+// 📁 Importação correta das rotas
+const userRoutes = require('./routes/routes/user');
+// const dashboardRoutes = require('./routes/dashboard');
 
+// 🚀 Uso das rotas
+app.use('/users', userRoutes);
+// app.use('/dashboard', dashboardRoutes);
 
 module.exports = app;
