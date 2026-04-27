@@ -83,8 +83,16 @@
   <button onclick="carregarDados()">🔄 Atualizar</button>
 
   <script>
-    const API = 'http://localhost:3000/usuarios/dashboard';
-
+    const API = 'http://localhost:3000/dashboard';
+  
+    // 🔐 pega token salvo (login)
+    const token = localStorage.getItem('token');
+  
+    if (!token) {
+      alert('Você precisa fazer login!');
+      window.location.href = 'login.html'; // se tiver tela de login
+    }
+  
     async function carregarDados() {
       await Promise.all([
         carregarMelhorVolta(),
@@ -92,32 +100,45 @@
         carregarRanking()
       ]);
     }
-
+  
+    function getHeaders() {
+      return {
+        'Content-Type': 'application/json',
+        'Authorization': token
+      };
+    }
+  
+    // 🥇 Melhor volta
     async function carregarMelhorVolta() {
       try {
-        const res = await fetch(`${API}/melhor-volta`);
+        const res = await fetch(`${API}/melhor-volta`, {
+          headers: getHeaders()
+        });
+  
         const data = await res.json();
-
         if (!res.ok) throw new Error();
-
+  
         document.getElementById('melhorVolta').innerHTML =
           `${data.nome} - ${data.melhor_volta}s`;
-
+  
       } catch {
         document.getElementById('melhorVolta').innerHTML = 'Erro ao carregar';
       }
     }
-
+  
+    // ⏳ Tempo total
     async function carregarTempoTotal() {
       try {
-        const res = await fetch(`${API}/tempo-total`);
+        const res = await fetch(`${API}/tempo-total`, {
+          headers: getHeaders()
+        });
+  
         const data = await res.json();
-
         if (!res.ok) throw new Error();
-
+  
         const div = document.getElementById('tempoTotal');
         div.innerHTML = '';
-
+  
         data.forEach(c => {
           div.innerHTML += `
             <div class="ranking-item">
@@ -126,22 +147,25 @@
             </div>
           `;
         });
-
+  
       } catch {
         document.getElementById('tempoTotal').innerHTML = 'Erro ao carregar';
       }
     }
-
+  
+    // 🏆 Ranking
     async function carregarRanking() {
       try {
-        const res = await fetch(`${API}/ranking`);
+        const res = await fetch(`${API}/ranking`, {
+          headers: getHeaders()
+        });
+  
         const data = await res.json();
-
         if (!res.ok) throw new Error();
-
+  
         const div = document.getElementById('ranking');
         div.innerHTML = '';
-
+  
         data.forEach((c, index) => {
           div.innerHTML += `
             <div class="ranking-item">
@@ -150,13 +174,12 @@
             </div>
           `;
         });
-
+  
       } catch {
         document.getElementById('ranking').innerHTML = 'Erro ao carregar';
       }
     }
-
-    // AUTO CARREGAR
+    
     carregarDados();
   </script>
 
