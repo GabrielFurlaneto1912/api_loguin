@@ -1,7 +1,9 @@
 const express = require('express');
 const router = express.Router();
 const db = require('../../db');
+const bcrypt = require('bcrypt');
 
+const saltRounds = 10;
 
 // =========================
 // 👤 USUÁRIOS
@@ -14,65 +16,6 @@ router.get('/', (req, res) => {
             return res.status(500).json({ error: 'Erro ao buscar usuários' });
         }
         return res.json(results);
-    });
-});
-
-// CRIAR usuário
-router.post('/create', (req, res) => {
-    const { nome, email, senha } = req.body;
-
-    if (!nome || !email || !senha) {
-        return res.status(400).json({ error: 'Nome, email e senha são obrigatórios' });
-    }
-
-    const sql = 'INSERT INTO usuarios (nome, email, senha) VALUES (?, ?, ?)';
-
-    db.query(sql, [nome, email, senha], (err, result) => {
-        if (err) {
-            return res.status(500).json({ error: 'Erro ao criar usuário' });
-        }
-
-        return res.status(201).json({
-            message: 'Usuário criado com sucesso',
-            id: result.insertId
-        });
-    });
-});
-
-// ATUALIZAR usuário
-router.put('/update/:id', (req, res) => {
-    const { id } = req.params;
-    const { nome, email, senha } = req.body;
-
-    const sql = 'UPDATE usuarios SET nome = ?, email = ?, senha = ? WHERE id = ?';
-
-    db.query(sql, [nome, email, senha, id], (err, result) => {
-        if (err) {
-            return res.status(500).json({ error: 'Erro ao atualizar usuário' });
-        }
-
-        if (result.affectedRows === 0) {
-            return res.status(404).json({ error: 'Usuário não encontrado' });
-        }
-
-        return res.json({ message: 'Usuário atualizado com sucesso' });
-    });
-});
-
-// DELETAR usuário
-router.delete('/delete/:id', (req, res) => {
-    const { id } = req.params;
-
-    db.query('DELETE FROM usuarios WHERE id = ?', [id], (err, result) => {
-        if (err) {
-            return res.status(500).json({ error: 'Erro ao deletar usuário' });
-        }
-
-        if (result.affectedRows === 0) {
-            return res.status(404).json({ error: 'Usuário não encontrado' });
-        }
-
-        return res.json({ message: 'Usuário deletado com sucesso' });
     });
 });
 
@@ -97,6 +40,131 @@ router.get('/:id', (req, res) => {
     );
 });
 
+// =========================
+// 🔐 AUTH
+// =========================
+
+// CRIAR usuário (com hash)
+router.post('/create', async (req, res) => {
+    const { nome, email, senha } = req.body;
+
+    if (!nome || !email || !senha) {
+        return res.status(400).json({ error: 'Nome, email e senha são obrigatórios' });
+    }
+
+    try {
+        const senhaHash = await bcrypt.hash(senha, saltRounds);
+
+        const sql = 'INSERT INTO usuarios (nome, email, senha) VALUES (?, ?, ?)';
+
+        db.query(sql, [nome, email, senhaHash], (err, result) => {
+            if (err) {
+                return res.status(500).json({ error: 'Erro ao criar usuário' });
+            }
+
+            return res.status(201).json({
+                message: 'Usuário criado com sucesso',
+                id: result.insertId
+            });
+        });
+
+    } catch (err) {
+        return res.status(500).json({ error: 'Erro ao criptografar senha' });
+    }
+});
+
+// LOGIN
+router.post('/login', (req, res) => {
+    const { email, senha } = req.body;
+
+    if (!email || !senha) {
+        return res.status(400).json({ error: 'Email e senha são obrigatórios' });
+    }
+
+    db.query(
+        'SELECT * FROM usuarios WHERE email = ?',
+        [email],
+        async (err, results) => {
+            if (err) return res.status(500).json({ error: 'Erro no servidor' });
+
+            if (results.length === 0) {
+                return res.status(404).json({ error: 'Usuário não encontrado' });
+            }
+
+            const usuario = results[0];
+
+            try {
+                const senhaValida = await bcrypt.compare(senha, usuario.senha);
+
+                if (!senhaValida) {
+                    return res.status(401).json({ error: 'Senha incorreta' });
+                }
+
+                return res.json({
+                    message: 'Login realizado com sucesso',
+                    usuario: {
+                        id: usuario.id,
+                        nome: usuario.nome,
+                        email: usuario.email
+                    }
+                });
+
+            } catch (err) {
+                return res.status(500).json({ error: 'Erro ao verificar senha' });
+            }
+        }
+    );
+});
+
+// =========================
+// ✏️ UPDATE
+// =========================
+
+router.put('/update/:id', async (req, res) => {
+    const { id } = req.params;
+    const { nome, email, senha } = req.body;
+
+    try {
+        const senhaHash = await bcrypt.hash(senha, saltRounds);
+
+        const sql = 'UPDATE usuarios SET nome = ?, email = ?, senha = ? WHERE id = ?';
+
+        db.query(sql, [nome, email, senhaHash, id], (err, result) => {
+            if (err) {
+                return res.status(500).json({ error: 'Erro ao atualizar usuário' });
+            }
+
+            if (result.affectedRows === 0) {
+                return res.status(404).json({ error: 'Usuário não encontrado' });
+            }
+
+            return res.json({ message: 'Usuário atualizado com sucesso' });
+        });
+
+    } catch (err) {
+        return res.status(500).json({ error: 'Erro ao criptografar senha' });
+    }
+});
+
+// =========================
+// 🗑️ DELETE
+// =========================
+
+router.delete('/delete/:id', (req, res) => {
+    const { id } = req.params;
+
+    db.query('DELETE FROM usuarios WHERE id = ?', [id], (err, result) => {
+        if (err) {
+            return res.status(500).json({ error: 'Erro ao deletar usuário' });
+        }
+
+        if (result.affectedRows === 0) {
+            return res.status(404).json({ error: 'Usuário não encontrado' });
+        }
+
+        return res.json({ message: 'Usuário deletado com sucesso' });
+    });
+});
 
 // =========================
 // 📊 DASHBOARD
@@ -143,6 +211,5 @@ router.get('/dashboard/ranking', (req, res) => {
         }
     );
 });
-
 
 module.exports = router;

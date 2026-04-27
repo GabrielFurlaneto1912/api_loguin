@@ -1,14 +1,16 @@
 const express = require('express');
 const app = express();
+const cors = require('cors');
 
+app.use(cors());
 app.use(express.json());
 
-// 📁 Importação correta das rotas
-const userRoutes = require('./routes/routes/user');
-// const dashboardRoutes = require('./routes/dashboard');
+// IMPORTA ROTA
+const usuariosRoutes = require('./routes/usuarios');
 
-// 🚀 Uso das rotas
-app.use('/users', userRoutes);
-// app.use('/dashboard', dashboardRoutes);
+// PREFIXO DA API
+app.use('/usuarios', usuariosRoutes);
 
-module.exports = app;
+app.listen(3000, () => {
+    console.log('Servidor rodando em http://localhost:3000');
+});

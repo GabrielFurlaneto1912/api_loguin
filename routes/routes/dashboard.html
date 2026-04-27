@@ -63,19 +63,16 @@
 
   <div class="container">
 
-    <!-- Melhor Volta -->
     <div class="card">
       <h2>🥇 Melhor Volta</h2>
       <p id="melhorVolta">Carregando...</p>
     </div>
 
-    <!-- Tempo Total -->
     <div class="card">
       <h2>⏳ Tempo Total</h2>
       <div id="tempoTotal"></div>
     </div>
 
-    <!-- Ranking -->
     <div class="card">
       <h2>🏆 Ranking</h2>
       <div id="ranking"></div>
@@ -86,60 +83,80 @@
   <button onclick="carregarDados()">🔄 Atualizar</button>
 
   <script>
-    const API = 'http://localhost:3000/users/dashboard';
+    const API = 'http://localhost:3000/usuarios/dashboard';
 
     async function carregarDados() {
-      carregarMelhorVolta();
-      carregarTempoTotal();
-      carregarRanking();
+      await Promise.all([
+        carregarMelhorVolta(),
+        carregarTempoTotal(),
+        carregarRanking()
+      ]);
     }
 
-    // 🥇 Melhor volta
     async function carregarMelhorVolta() {
-      const res = await fetch(`${API}/melhor-volta`);
-      const data = await res.json();
+      try {
+        const res = await fetch(`${API}/melhor-volta`);
+        const data = await res.json();
 
-      document.getElementById('melhorVolta').innerHTML =
-        `${data.nome} - ${data.melhor_volta}s`;
+        if (!res.ok) throw new Error();
+
+        document.getElementById('melhorVolta').innerHTML =
+          `${data.nome} - ${data.melhor_volta}s`;
+
+      } catch {
+        document.getElementById('melhorVolta').innerHTML = 'Erro ao carregar';
+      }
     }
 
-    // ⏳ Tempo total
     async function carregarTempoTotal() {
-      const res = await fetch(`${API}/tempo-total`);
-      const data = await res.json();
+      try {
+        const res = await fetch(`${API}/tempo-total`);
+        const data = await res.json();
 
-      const div = document.getElementById('tempoTotal');
-      div.innerHTML = '';
+        if (!res.ok) throw new Error();
 
-      data.forEach(c => {
-        div.innerHTML += `
-          <div class="ranking-item">
-            <span>${c.nome}</span>
-            <span>${c.tempo_total}s</span>
-          </div>
-        `;
-      });
+        const div = document.getElementById('tempoTotal');
+        div.innerHTML = '';
+
+        data.forEach(c => {
+          div.innerHTML += `
+            <div class="ranking-item">
+              <span>${c.nome}</span>
+              <span>${c.tempo_total}s</span>
+            </div>
+          `;
+        });
+
+      } catch {
+        document.getElementById('tempoTotal').innerHTML = 'Erro ao carregar';
+      }
     }
 
-    // 🏆 Ranking
     async function carregarRanking() {
-      const res = await fetch(`${API}/ranking`);
-      const data = await res.json();
+      try {
+        const res = await fetch(`${API}/ranking`);
+        const data = await res.json();
 
-      const div = document.getElementById('ranking');
-      div.innerHTML = '';
+        if (!res.ok) throw new Error();
 
-      data.forEach((c, index) => {
-        div.innerHTML += `
-          <div class="ranking-item">
-            <span>#${index + 1} ${c.nome}</span>
-            <span>${c.total}s</span>
-          </div>
-        `;
-      });
+        const div = document.getElementById('ranking');
+        div.innerHTML = '';
+
+        data.forEach((c, index) => {
+          div.innerHTML += `
+            <div class="ranking-item">
+              <span>#${index + 1} ${c.nome}</span>
+              <span>${c.total}s</span>
+            </div>
+          `;
+        });
+
+      } catch {
+        document.getElementById('ranking').innerHTML = 'Erro ao carregar';
+      }
     }
 
-    // carregar ao abrir
+    // AUTO CARREGAR
     carregarDados();
   </script>
 
