@@ -5,18 +5,16 @@ const db = mysql.createPool({
   user: 'root',
   password: '',
   database: 'corrida_db',
-  waitForConnections: true,
-  connectionLimit: 10,
-  queueLimit: 0
+  port: 3306,
+  connectTimeout: 10000
 });
 
-// Teste de conexão
-db.getConnection((err, connection) => {
+db.getConnection((err, conn) => {
   if (err) {
-    console.error('Erro ao conectar no banco:', err);
+    console.error('ERRO DETALHADO:', err);
   } else {
     console.log('Banco conectado!');
-    connection.release();
+    conn.release();
   }
 });
 

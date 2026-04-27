@@ -1,25 +1,20 @@
-const express = require('express');
-const cors = require('cors');
-const path = require('path');
-require('dotenv').config();
+const mysql = require('mysql2');
 
-const app = express();
-
-app.use(cors());
-app.use(express.json());
-
-// 📁 Servir arquivos estáticos (HTML, CSS, JS)
-app.use(express.static(path.join(__dirname, 'public')));
-
-// 🖥️ Rota para abrir o dashboard
-app.get('/dashboard', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'dashboard.html'));
+const db = mysql.createPool({
+  host: '127.0.0.1',
+  user: 'root',
+  password: 'root',
+  database: 'corrida_db',
+  port: 3306
 });
 
-// 🔗 Rotas da API
-const userRoutes = require('./routes/users'); 
+db.getConnection((err, conn) => {
+  if (err) {
+    console.error('Erro ao conectar no banco:', err);
+  } else {
+    console.log('Banco conectado!');
+    conn.release();
+  }
+});
 
-app.use('/users', userRoutes);
-app.use('/dashboard', dashboardRoutes);
-
-module.exports = app;
+module.exports = db;
