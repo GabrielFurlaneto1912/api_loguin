@@ -1,16 +1,17 @@
 const express = require('express');
-const app = express();
 const cors = require('cors');
+require('dotenv').config();
+
+const app = express();
 
 app.use(cors());
 app.use(express.json());
 
-// IMPORTA ROTA
-const usuariosRoutes = require('./routes/usuarios');
+// rotas
+const userRoutes = require('./routes/users');
+const dashboardRoutes = require('./routes/dashboard');
 
-// PREFIXO DA API
-app.use('/usuarios', usuariosRoutes);
+app.use('/users', userRoutes);
+app.use('/dashboard', dashboardRoutes);
 
-app.listen(3000, () => {
-    console.log('Servidor rodando em http://localhost:3000');
-});
+module.exports = app;
