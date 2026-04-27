@@ -1,187 +1,183 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8">
-  <title>Dashboard Corrida</title>
+<meta charset="UTF-8">
+<title>Sistema de Corrida</title>
 
-  <style>
-    body {
-      font-family: Arial;
-      background: #0f172a;
-      color: white;
-      margin: 0;
-      padding: 20px;
-    }
+<style>
+body {
+  font-family: Arial;
+  background: #0f172a;
+  color: white;
+  padding: 20px;
+}
 
-    h1 {
-      text-align: center;
-      margin-bottom: 30px;
-    }
+h1 { text-align: center; }
 
-    .container {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 20px;
-    }
+.container {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
 
-    .card {
-      background: #1e293b;
-      padding: 20px;
-      border-radius: 12px;
-      box-shadow: 0 0 10px rgba(0,0,0,0.3);
-    }
+.card {
+  background: #1e293b;
+  padding: 20px;
+  border-radius: 12px;
+}
 
-    .card h2 {
-      margin-bottom: 15px;
-      font-size: 18px;
-      color: #38bdf8;
-    }
+input, button, select {
+  width: 100%;
+  padding: 10px;
+  margin-top: 10px;
+  border-radius: 6px;
+  border: none;
+}
 
-    .ranking-item {
-      display: flex;
-      justify-content: space-between;
-      padding: 5px 0;
-      border-bottom: 1px solid #334155;
-    }
+button {
+  background: #38bdf8;
+  cursor: pointer;
+}
 
-    button {
-      margin-top: 20px;
-      padding: 10px;
-      width: 100%;
-      border: none;
-      background: #38bdf8;
-      color: black;
-      border-radius: 8px;
-      cursor: pointer;
-    }
-  </style>
+.item {
+  display: flex;
+  justify-content: space-between;
+  border-bottom: 1px solid #334155;
+  padding: 5px;
+}
+</style>
 </head>
 
 <body>
 
-  <h1>🏎️ Dashboard de Corrida</h1>
+<h1>🏎️ Sistema de Corrida</h1>
 
-  <div class="container">
+<div class="container">
 
-    <div class="card">
-      <h2>🥇 Melhor Volta</h2>
-      <p id="melhorVolta">Carregando...</p>
-    </div>
+<!-- CORREDORES -->
+<div class="card">
+  <h2>🏎️ Corredores</h2>
 
-    <div class="card">
-      <h2>⏳ Tempo Total</h2>
-      <div id="tempoTotal"></div>
-    </div>
+  <input id="nomeCorredor" placeholder="Nome do corredor">
+  <button onclick="criarCorredor()">Cadastrar</button>
 
-    <div class="card">
-      <h2>🏆 Ranking</h2>
-      <div id="ranking"></div>
-    </div>
+  <div id="listaCorredores"></div>
+</div>
 
-  </div>
+<!-- VOLTAS -->
+<div class="card">
+  <h2>⏱️ Registrar Volta</h2>
 
-  <button onclick="carregarDados()">🔄 Atualizar</button>
+  <select id="selectCorredor"></select>
+  <input id="tempoVolta" placeholder="Tempo (ex: 72.345)">
+  <button onclick="registrarVolta()">Registrar</button>
+</div>
 
-  <script>
-    const API = 'http://localhost:3000/dashboard';
-  
-    // 🔐 pega token salvo (login)
-    const token = localStorage.getItem('token');
-  
-    if (!token) {
-      alert('Você precisa fazer login!');
-      window.location.href = 'login.html'; // se tiver tela de login
-    }
-  
-    async function carregarDados() {
-      await Promise.all([
-        carregarMelhorVolta(),
-        carregarTempoTotal(),
-        carregarRanking()
-      ]);
-    }
-  
-    function getHeaders() {
-      return {
-        'Content-Type': 'application/json',
-        'Authorization': token
-      };
-    }
-  
-    // 🥇 Melhor volta
-    async function carregarMelhorVolta() {
-      try {
-        const res = await fetch(`${API}/melhor-volta`, {
-          headers: getHeaders()
-        });
-  
-        const data = await res.json();
-        if (!res.ok) throw new Error();
-  
-        document.getElementById('melhorVolta').innerHTML =
-          `${data.nome} - ${data.melhor_volta}s`;
-  
-      } catch {
-        document.getElementById('melhorVolta').innerHTML = 'Erro ao carregar';
-      }
-    }
-  
-    // ⏳ Tempo total
-    async function carregarTempoTotal() {
-      try {
-        const res = await fetch(`${API}/tempo-total`, {
-          headers: getHeaders()
-        });
-  
-        const data = await res.json();
-        if (!res.ok) throw new Error();
-  
-        const div = document.getElementById('tempoTotal');
-        div.innerHTML = '';
-  
-        data.forEach(c => {
-          div.innerHTML += `
-            <div class="ranking-item">
-              <span>${c.nome}</span>
-              <span>${c.tempo_total}s</span>
-            </div>
-          `;
-        });
-  
-      } catch {
-        document.getElementById('tempoTotal').innerHTML = 'Erro ao carregar';
-      }
-    }
-  
-    // 🏆 Ranking
-    async function carregarRanking() {
-      try {
-        const res = await fetch(`${API}/ranking`, {
-          headers: getHeaders()
-        });
-  
-        const data = await res.json();
-        if (!res.ok) throw new Error();
-  
-        const div = document.getElementById('ranking');
-        div.innerHTML = '';
-  
-        data.forEach((c, index) => {
-          div.innerHTML += `
-            <div class="ranking-item">
-              <span>#${index + 1} ${c.nome}</span>
-              <span>${c.total}s</span>
-            </div>
-          `;
-        });
-  
-      } catch {
-        document.getElementById('ranking').innerHTML = 'Erro ao carregar';
-      }
-    }
-    
-    carregarDados();
-  </script>
+<!-- DASHBOARD -->
+<div class="card">
+  <h2>🥇 Melhor Volta</h2>
+  <p id="melhorVolta"></p>
+</div>
+
+<div class="card">
+  <h2>🏆 Ranking</h2>
+  <div id="ranking"></div>
+</div>
+
+</div>
+
+<script>
+const API = 'http://localhost:3000';
+const token = localStorage.getItem('token');
+
+function headers() {
+  return {
+    'Content-Type': 'application/json',
+    'Authorization': token
+  };
+}
+
+// =========================
+// CORREDORES
+// =========================
+async function carregarCorredores() {
+  const res = await fetch(`${API}/corredores`, { headers: headers() });
+  const data = await res.json();
+
+  const lista = document.getElementById('listaCorredores');
+  const select = document.getElementById('selectCorredor');
+
+  lista.innerHTML = '';
+  select.innerHTML = '';
+
+  data.forEach(c => {
+    lista.innerHTML += `<div class="item">${c.nome}</div>`;
+    select.innerHTML += `<option value="${c.id}">${c.nome}</option>`;
+  });
+}
+
+async function criarCorredor() {
+  const nome = document.getElementById('nomeCorredor').value;
+
+  await fetch(`${API}/corredores`, {
+    method: 'POST',
+    headers: headers(),
+    body: JSON.stringify({ nome })
+  });
+
+  carregarCorredores();
+}
+
+// =========================
+// VOLTAS
+// =========================
+async function registrarVolta() {
+  const corredor_id = document.getElementById('selectCorredor').value;
+  const tempo = document.getElementById('tempoVolta').value;
+
+  await fetch(`${API}/voltas`, {
+    method: 'POST',
+    headers: headers(),
+    body: JSON.stringify({ corredor_id, tempo })
+  });
+
+  carregarDashboard();
+}
+
+// =========================
+// DASHBOARD
+// =========================
+async function carregarDashboard() {
+  // melhor volta
+  const melhor = await fetch(`${API}/dashboard/melhor-volta`, { headers: headers() });
+  const melhorData = await melhor.json();
+
+  document.getElementById('melhorVolta').innerHTML =
+    `${melhorData.nome} - ${melhorData.melhor_volta}s`;
+
+  // ranking
+  const rankingRes = await fetch(`${API}/dashboard/ranking`, { headers: headers() });
+  const rankingData = await rankingRes.json();
+
+  const div = document.getElementById('ranking');
+  div.innerHTML = '';
+
+  rankingData.forEach((c, i) => {
+    div.innerHTML += `
+      <div class="item">
+        <span>#${i + 1} ${c.nome}</span>
+        <span>${c.total}s</span>
+      </div>
+    `;
+  });
+}
+
+// =========================
+// INIT
+// =========================
+carregarCorredores();
+carregarDashboard();
+</script>
 
 </body>
 </html>
