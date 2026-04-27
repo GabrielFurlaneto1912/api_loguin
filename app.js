@@ -17,7 +17,7 @@ app.get('/dashboard', (req, res) => {
 });
 
 // 🔗 Rotas da API
-const userRoutes = require('./routes/users');
+const userRoutes = require('./routes/user');
 const dashboardRoutes = require('./routes/dashboard');
 
 app.use('/users', userRoutes);
